@@ -9,7 +9,7 @@ function Processor80386(reader) {
             this.name = name;
 
             this.toString = function() {
-                return this.name;
+                return this.name.toLowerCase();
             };
         };
 
@@ -78,11 +78,11 @@ function Processor80386(reader) {
                     }
                     else if (mod === 0x02) { // 10 = xor dstReg, [srcReg+disp32]
                         var disp32 = scope.reader.readUint32();
-                        console.log(sprintf('xor %s, [%s+0x%08x]', dstReg, srcReg, disp32));
+                        console.log(sprintf('xor %s, [%s%+02Xh]', dstReg, srcReg, disp32));
                     }
                     else if (mod === 0x01) { // 01 = xor dstReg, [srcReg+disp8]
                         var disp8 = scope.reader.readUint8();
-                        console.log(sprintf('xor %s, [%s+0x%02x]', dstReg, srcReg, disp8));
+                        console.log(sprintf('xor %s, [%s%+02Xh]', dstReg, srcReg, disp8));
                     }
                     else if (mod === 0x00) { // 00 = xor dstReg, [srcReg]
                         console.log(sprintf('xor %s, [%s]', dstReg, srcReg));
@@ -105,11 +105,11 @@ function Processor80386(reader) {
                     }
                     else if (mod === 0x02) { // 10 = cmp regA, [regB+disp32]
                         var disp32 = scope.reader.readUint32();
-                        console.log(sprintf('cmp %s, [%s+0x%08x]', regA, regB, disp32));
+                        console.log(sprintf('cmp %s, [%s%+02Xh]', regA, regB, disp32));
                     }
                     else if (mod === 0x01) { // 01 = cmp regA, [regB+disp8]
                         var disp8 = scope.reader.readUint8();
-                        console.log(sprintf('cmp %s, [%s+0x%02x]', regA, regB, disp8));
+                        console.log(sprintf('cmp %s, [%s%+02Xh]', regA, regB, disp8));
                     }
                     else if (mod === 0x00) { // 00 = cmp regA, [regB]
                         console.log(sprintf('cmp %s, [%s]', regA, regB));
@@ -154,7 +154,7 @@ function Processor80386(reader) {
                 {
                     var imm32 = scope.reader.readUint32();
 
-                    console.log(sprintf('push 0x%08x', imm32));
+                    console.log(sprintf('push %+02Xh', imm32));
 
                     break;
                 }
@@ -163,7 +163,7 @@ function Processor80386(reader) {
                 {
                     var imm8 = scope.reader.readInt8();
 
-                    console.log(sprintf('push 0x%08x', (imm8 >>> 0)));
+                    console.log(sprintf('push %+02Xh', (imm8 >>> 0)));
 
                     break;
                 }
@@ -172,7 +172,7 @@ function Processor80386(reader) {
                 {
                     var rel8 = scope.reader.readInt8();
 
-                    console.log(sprintf('jnz 0x%08x', rel8));
+                    console.log(sprintf('jnz %+02Xh', rel8));
 
                     break;
                 }
@@ -219,21 +219,21 @@ function Processor80386(reader) {
 
                     if (mod === 0x03) { // 11 = instr reg, imm8
                         var imm8 = scope.reader.readUint8();
-                        console.log(sprintf('%s %s, 0x%02x', instr, reg, imm8));
+                        console.log(sprintf('%s %s, %+02Xh', instr, reg, imm8));
                     }
                     else if (mod === 0x02) { // 10 = instr [reg+disp32], imm8
                         var disp32 = scope.reader.readUint32();
                         var imm8 = scope.reader.readUint8();
-                        console.log(sprintf('%s [%s+0x%08x], 0x%02x', instr, reg, disp32, imm8));
+                        console.log(sprintf('%s [%s%+02Xh], %+02Xh', instr, reg, disp32, imm8));
                     }
                     else if (mod === 0x01) { // 01 = instr [reg+disp8], imm8
                         var disp8 = scope.reader.readUint8();
                         var imm8 = scope.reader.readUint8();
-                        console.log(sprintf('%s [%s+0x%02x], 0x%02x', instr, reg, disp8, imm8));
+                        console.log(sprintf('%s [%s%+02Xh], %+02Xh', instr, reg, disp8, imm8));
                     }
                     else if (mod === 0x00) { // 00 = instr [reg], imm8
                         var imm8 = scope.reader.readUint8();
-                        console.log(sprintf('%s %s, 0x%02x', instr, reg, imm8));
+                        console.log(sprintf('%s %s, %+02Xh', instr, reg, imm8));
                     }
 
                     break;
@@ -253,11 +253,11 @@ function Processor80386(reader) {
                     }
                     else if(mod === 0x02) { // 10 = test [regA+disp32], regB
                         var disp32 = scope.reader.readUint32();
-                        console.log(sprintf('test [%s+0x%08x], %s', regA, disp32, regB));
+                        console.log(sprintf('test [%s%+02Xh], %s', regA, disp32, regB));
                     }
                     else if(mod === 0x01) { // 01 = test [regA+disp8], regB
                         var disp8 = scope.reader.readInt8();
-                        console.log(sprintf('test [%s+0x%02x], %s', regA, disp8, regB));
+                        console.log(sprintf('test [%s%+02Xh], %s', regA, disp8, regB));
                     }
                     else if(mod === 0x00) { // 00 = test [regA], regB
                         console.log(sprintf('test [%s], %s', regA, regB));
@@ -283,11 +283,11 @@ function Processor80386(reader) {
                     }
                     else if(mod === 0x02) { // 10 = mov [dstReg+disp32], srcReg
                         var disp32 = scope.reader.readUint32();
-                        console.log(sprintf('mov [%s+0x%08x], %s', dstReg, disp32, srcReg));
+                        console.log(sprintf('mov [%s%+02Xh], %s', dstReg, disp32, srcReg));
                     }
                     else if(mod === 0x01) { // 01 = mov [dstReg+disp8], srcReg
                         var disp8 = scope.reader.readInt8();
-                        console.log(sprintf('mov [%s+0x%02x], %s', dstReg, disp8, srcReg));
+                        console.log(sprintf('mov [%s%+02Xh], %s', dstReg, disp8, srcReg));
                     }
                     else if(mod === 0x00) { // 00 = mov [dstReg], srcReg
                         console.log(sprintf('mov [%s], %s', dstReg, srcReg));
@@ -313,11 +313,11 @@ function Processor80386(reader) {
                     }
                     else if (mod === 0x02) { // 10 = mov dstReg, [srcReg+disp32]
                         var disp32 = scope.reader.readInt32();
-                        console.log(sprintf('mov %s, [%s+0x%08x]', dstReg, srcReg, disp32));
+                        console.log(sprintf('mov %s, [%s%+02Xh]', dstReg, srcReg, disp32));
                     }
                     else if (mod === 0x01) { // 01 = mov dstReg, [srcReg+disp8]
                         var disp8 = scope.reader.readInt8();
-                        console.log(sprintf('mov %s, [%s+0x%02x]', dstReg, srcReg, disp8));
+                        console.log(sprintf('mov %s, [%s%+02Xh]', dstReg, srcReg, disp8));
                     }
                     else if (mod === 0x00) { // 00 = mov dstReg, [srcReg]
                         console.log(sprintf('mov %s, [%s]', dstReg, srcReg));
@@ -340,11 +340,11 @@ function Processor80386(reader) {
 
                     if (mod === 0x02) { // 10 = lea dstReg, [srcReg+disp32]
                         var disp32 = scope.reader.readUint32();
-                        console.log(sprintf('lea %s, [%s+0x%08x]', dstReg, srcReg, disp32));
+                        console.log(sprintf('lea %s, [%s%+02Xh]', dstReg, srcReg, disp32));
                     }
                     else if (mod === 0x01) { // 01 = lea dstReg, [srcReg+disp8]
                         var disp8 = scope.reader.readUint8();
-                        console.log(sprintf('lea %s, [%s+0x%02x]', dstReg, srcReg, disp8));
+                        console.log(sprintf('lea %s, [%s%+02Xh]', dstReg, srcReg, disp8));
                     }
                     else if (mod === 0x00) { // 00 = lea dstReg, [srcReg]
                         console.log(sprintf('lea %s, [%s]', dstReg, srcReg));
@@ -365,7 +365,7 @@ function Processor80386(reader) {
                     var reg = scope.registerFromCode(po & 0x07); // 00000XXX
                     var imm32 = scope.reader.readUint32();
 
-                    console.log(sprintf('mov %s, 0x%08x', reg, imm32));
+                    console.log(sprintf('mov %s, %+02Xh', reg, imm32));
 
                     break;
                 }
@@ -388,7 +388,7 @@ function Processor80386(reader) {
                 {
                     var imm32 = scope.reader.readUint32();
 
-                    console.log(sprintf('call 0x%08x', imm32));
+                    console.log(sprintf('call %+02Xh', imm32));
 
                     break;
                 }
