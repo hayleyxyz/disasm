@@ -159,6 +159,24 @@ function Processor80386(reader) {
                     break;
                 }
 
+                case 0x6a: // push imm8
+                {
+                    var imm8 = scope.reader.readInt8();
+
+                    console.log(sprintf('push 0x%08x', (imm8 >>> 0)));
+
+                    break;
+                }
+
+                case 0x75: // jnz rel8
+                {
+                    var rel8 = scope.reader.readInt8();
+
+                    console.log(sprintf('jnz 0x%08x', rel8));
+
+                    break;
+                }
+
                 case 0x83: // sub, add etc.
                 {
                     var op1 = scope.reader.readUint8();
@@ -170,48 +188,109 @@ function Processor80386(reader) {
                     var regCode = (op1 & 0x07); // 00000XXX
                     var reg = scope.registerFromCode(regCode);
 
-                    if (ext === 0x05) { // SUB
-                        if (mod === 0x03) { // 11 = sub reg, imm8
-                            var imm8 = scope.reader.readUint8();
-                            console.log(sprintf('sub %s, 0x%02x', reg, imm8));
-                        }
-                        else if (mod === 0x02) { // 10 = sub [reg+disp32], imm8
-                            var disp32 = scope.reader.readUint32();
-                            var imm8 = scope.reader.readUint8();
-                            console.log(sprintf('sub [%s+0x%08x], 0x%02x', reg, disp32, imm8));
-                        }
-                        else if (mod === 0x01) { // 01 = sub [reg+disp8], imm8
-                            var disp8 = scope.reader.readUint8();
-                            var imm8 = scope.reader.readUint8();
-                            console.log(sprintf('sub [%s+0x%02x], 0x%02x', reg, disp8, imm8));
-                        }
-                        else if (mod === 0x00) { // 00 = sub [reg], imm8
-                            var imm8 = scope.reader.readUint8();
-                            console.log(sprintf('sub %s, 0x%02x', reg, imm8));
-                        }
+                    var instr = null;
+
+                    switch(ext) {
+                        case 0x07:
+                            instr = 'cmp';
+                            break;
+                        case 0x06:
+                            instr = 'xor';
+                            break;
+                        case 0x05:
+                            instr = 'sub';
+                            break;
+                        case 0x04:
+                            instr = 'and';
+                            break;
+                        case 0x03:
+                            instr = 'sbb';
+                            break;
+                        case 0x02:
+                            instr = 'adc';
+                            break;
+                        case 0x01:
+                            instr = 'or';
+                            break;
+                        case 0x00:
+                            instr = 'add';
+                            break;
                     }
-                    else if (ext === 0x00) {
-                        if (mod === 0x03) { // 11 = add reg, imm8
-                            var imm8 = scope.reader.readUint8();
-                            console.log(sprintf('add %s, 0x%02x', reg, imm8));
-                        }
-                        else if (mod === 0x02) { // 10 = add [reg+disp32], imm8
-                            var disp32 = scope.reader.readUint32();
-                            var imm8 = scope.reader.readUint8();
-                            console.log(sprintf('add [%s+0x%08x], 0x%02x', reg, disp32, imm8));
-                        }
-                        else if (mod === 0x01) { // 01 = add [reg+disp8], imm8
-                            var disp8 = scope.reader.readUint8();
-                            var imm8 = scope.reader.readUint8();
-                            console.log(sprintf('add [%s+0x%02x], 0x%02x', reg, disp8, imm8));
-                        }
-                        else if (mod === 0x00) { // 00 = add [reg], imm8
-                            var imm8 = scope.reader.readUint8();
-                            console.log(sprintf('add %s, 0x%02x', reg, imm8));
-                        }
+
+                    if (mod === 0x03) { // 11 = instr reg, imm8
+                        var imm8 = scope.reader.readUint8();
+                        console.log(sprintf('%s %s, 0x%02x', instr, reg, imm8));
                     }
-                    else {
-                        throw new Error('Uninplemented');
+                    else if (mod === 0x02) { // 10 = instr [reg+disp32], imm8
+                        var disp32 = scope.reader.readUint32();
+                        var imm8 = scope.reader.readUint8();
+                        console.log(sprintf('%s [%s+0x%08x], 0x%02x', instr, reg, disp32, imm8));
+                    }
+                    else if (mod === 0x01) { // 01 = instr [reg+disp8], imm8
+                        var disp8 = scope.reader.readUint8();
+                        var imm8 = scope.reader.readUint8();
+                        console.log(sprintf('%s [%s+0x%02x], 0x%02x', instr, reg, disp8, imm8));
+                    }
+                    else if (mod === 0x00) { // 00 = instr [reg], imm8
+                        var imm8 = scope.reader.readUint8();
+                        console.log(sprintf('%s %s, 0x%02x', instr, reg, imm8));
+                    }
+
+                    break;
+                }
+
+                case 0x85: // test
+                {
+                    var op1 = scope.reader.readUint8();
+
+                    var mod = (op1 >> 6); // XX000000
+
+                    var regA = scope.registerFromCode(op1 & 0x07); // 00000XXX
+                    var regB = scope.registerFromCode((op1 >> 3) & 0x07); // 00XXX000
+
+                    if(mod === 0x03) { // 11 = test regA, regB
+                        console.log(sprintf('test %s, %s', regA, regB));
+                    }
+                    else if(mod === 0x02) { // 10 = test [regA+disp32], regB
+                        var disp32 = scope.reader.readUint32();
+                        console.log(sprintf('test [%s+0x%08x], %s', regA, disp32, regB));
+                    }
+                    else if(mod === 0x01) { // 01 = test [regA+disp8], regB
+                        var disp8 = scope.reader.readInt8();
+                        console.log(sprintf('test [%s+0x%02x], %s', regA, disp8, regB));
+                    }
+                    else if(mod === 0x00) { // 00 = test [regA], regB
+                        console.log(sprintf('test [%s], %s', regA, regB));
+                    }
+
+                    break;
+                }
+
+                case 0x89: // mov
+                {
+                    var op1 = scope.reader.readUint8();
+
+                    var mod = (op1 >> 6); // XX000000
+
+                    var srcRegCode = ((op1 >> 3) & 0x07); // 00XXX000
+                    var srcReg = scope.registerFromCode(srcRegCode);
+
+                    var dstRegCode = (op1 & 0x07); // 00000XXX
+                    var dstReg = scope.registerFromCode(dstRegCode);
+
+                    if(mod === 0x03) { // 11 = mov dstReg, srcReg
+                        console.log(sprintf('mov %s, %s', dstReg, srcReg));
+                    }
+                    else if(mod === 0x02) { // 10 = mov [dstReg+disp32], srcReg
+                        var disp32 = scope.reader.readUint32();
+                        console.log(sprintf('mov [%s+0x%08x], %s', dstReg, disp32, srcReg));
+                    }
+                    else if(mod === 0x01) { // 01 = mov [dstReg+disp8], srcReg
+                        var disp8 = scope.reader.readInt8();
+                        console.log(sprintf('mov [%s+0x%02x], %s', dstReg, disp8, srcReg));
+                    }
+                    else if(mod === 0x00) { // 00 = mov [dstReg], srcReg
+                        console.log(sprintf('mov [%s], %s', dstReg, srcReg));
                     }
 
                     break;
@@ -233,11 +312,11 @@ function Processor80386(reader) {
                         console.log(sprintf('mov %s, %s', dstReg, srcReg));
                     }
                     else if (mod === 0x02) { // 10 = mov dstReg, [srcReg+disp32]
-                        var disp32 = scope.reader.readUint32();
+                        var disp32 = scope.reader.readInt32();
                         console.log(sprintf('mov %s, [%s+0x%08x]', dstReg, srcReg, disp32));
                     }
                     else if (mod === 0x01) { // 01 = mov dstReg, [srcReg+disp8]
-                        var disp8 = scope.reader.readUint8();
+                        var disp8 = scope.reader.readInt8();
                         console.log(sprintf('mov %s, [%s+0x%02x]', dstReg, srcReg, disp8));
                     }
                     else if (mod === 0x00) { // 00 = mov dstReg, [srcReg]
@@ -294,6 +373,13 @@ function Processor80386(reader) {
                 case 0xc3: // retn
                 {
                     console.log('retn');
+
+                    break;
+                }
+
+                case 0xcc: // int 3 (trap to debugger)
+                {
+                    console.log('int 3');
 
                     break;
                 }
