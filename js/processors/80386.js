@@ -66,11 +66,11 @@ function Processor80386(reader) {
 
                     var mod = (op1 >> 6); // XX000000
 
-                    var srcRegCode = (op1 & 0x07); // 00000XXX
-                    var srcReg = scope.registerFromCode(srcRegCode);
-
                     var dstRegCode = ((op1 >> 3) & 0x07); // 00XXX000
                     var dstReg = scope.registerFromCode(dstRegCode);
+
+                    var srcRegCode = (op1 & 0x07); // 00000XXX
+                    var srcReg = scope.registerFromCode(srcRegCode);
 
                     if(mod === 0x03) { // 11 = xor dstReg, srcReg
                         console.log(sprintf('xor %s, %s', dstReg, srcReg));
@@ -92,10 +92,25 @@ function Processor80386(reader) {
                 case 0x3b: // cmp regA, regB
                     var op1 = scope.reader.readUint8();
 
+                    var mod = (op1 >> 6); // XX000000
+
                     var regA = scope.registerFromCode((op1 >> 3) & 0x07); // 00XXX000
                     var regB = scope.registerFromCode(op1 & 0x07); // 00000XXX
 
-                    throw new Error('Unfinished');
+                    if(mod === 0x03) { // 11 = cmp regA, regB
+                        console.log(sprintf('cmp %s, %s', regA, regB));
+                    }
+                    else if(mod === 0x02) { // 10 = cmp regA, [regB+disp32]
+                        var disp32 = scope.reader.readUint32();
+                        console.log(sprintf('cmp %s, [%s+0x%08x]', regA, regB, disp32));
+                    }
+                    else if(mod === 0x01) { // 01 = cmp regA, [regB+disp8]
+                        var disp8 = scope.reader.readUint8();
+                        console.log(sprintf('cmp %s, [%s+0x%02x]', regA, regB, disp8));
+                    }
+                    else if(mod === 0x00) { // 00 = cmp regA, [regB]
+                        console.log(sprintf('cmp %s, [%s]', regA, regB));
+                    }
 
                     break;
 
@@ -195,11 +210,11 @@ function Processor80386(reader) {
 
                     var mod = (op1 >> 6); // XX000000
 
-                    var srcRegCode = (op1 & 0x07); // 00000XXX
-                    var srcReg = scope.registerFromCode(srcRegCode);
-
                     var dstRegCode = ((op1 >> 3) & 0x07); // 00XXX000
                     var dstReg = scope.registerFromCode(dstRegCode);
+
+                    var srcRegCode = (op1 & 0x07); // 00000XXX
+                    var srcReg = scope.registerFromCode(srcRegCode);
 
                     if(mod === 0x03) { // 11 = mov dstReg, srcReg
                         console.log(sprintf('mov %s, %s', dstReg, srcReg));
@@ -255,6 +270,11 @@ function Processor80386(reader) {
                     var imm32 = scope.reader.readUint32();
 
                     console.log(sprintf('mov %s, 0x%08x', reg, imm32));
+
+                    break;
+
+                case 0xc3: // retn
+                    console.log('retn');
 
                     break;
 

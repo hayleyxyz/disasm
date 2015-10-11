@@ -124,7 +124,7 @@ function LoaderPe(reader) {
 
         scope.disassemble = function() {
             var cpu = new Processor80386(scope.reader);
-            scope.reader.seek(0x1010);
+            scope.reader.seek(0x1060);
 
             while(true) {
                 cpu.disassemble();
