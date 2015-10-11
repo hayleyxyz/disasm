@@ -19,17 +19,9 @@ function UI() {
                 }
 
                 var file = this.files[0];
-                var reader = new FileReader();
 
-                reader.onload = function(event) {
-                    var arrayBuffer = reader.result;
-                    var binaryReader = new ArrayBufferBinaryReader(arrayBuffer);
-
-                    var pe = new LoaderPe(binaryReader);
-                    pe.disassemble(binaryReader);
-                };
-
-                reader.readAsArrayBuffer(file);
+                var disam = new Disassembler();
+                disam.loadFile(file);
             }
         };
 
@@ -45,9 +37,29 @@ function Disassembler() {
 
         };
 
+        scope.loadFile = function(file) {
+            var reader = new FileReader();
+
+            reader.onload = scope.events.onFileReaderLoad;
+
+            reader.readAsArrayBuffer(file);
+        };
+
+        scope.events = {
+            onFileReaderLoad: function(event) {
+                var arrayBuffer = event.target.result;
+                var binaryReader = new ArrayBufferBinaryReader(arrayBuffer);
+
+                var pe = new LoaderPe(binaryReader);
+                pe.parse();
+
+                console.log(pe);
+            }
+        };
+
         scope.ctor();
 
-    })(scope);
+    })(this);
 }
 
 var ui = new UI();

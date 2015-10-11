@@ -113,11 +113,11 @@ function ArrayBufferBinaryReader(arrayBuffer) {
             var buffer = this.readUint8Buffer(2);
 
             if(scope.endian === scope.Endian.LITTLE) {
-                return buffer[1] << 16 |
+                return buffer[1] << 8 |
                     buffer[0];
             }
             else {
-                return buffer[0] << 16 |
+                return buffer[0] << 8 |
                     buffer[1];
             }
         };
@@ -181,6 +181,17 @@ function ArrayBufferBinaryReader(arrayBuffer) {
             scope.seek(length, scope.SeekOrigin.CURRENT);
 
             return view;
+        };
+
+        scope.readString = function(length) {
+            var buffer = scope.readUint8Buffer(length);
+            var string = '';
+
+            for(var i in buffer) {
+                string += String.fromCharCode(buffer[i]);
+            }
+
+            return string;
         };
 
         scope.ctor();
