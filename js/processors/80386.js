@@ -61,6 +61,36 @@ function Processor80386(reader) {
             var po = scope.reader.readUint8();
 
             switch(po) {
+                case 0x31:
+                {
+                    var op1 = scope.reader.readUint8();
+
+                    var mod = (op1 >> 6); // XX000000
+
+                    var dstRegCode = (op1 & 0x07); // 00000XXX
+                    var dstReg = scope.registerFromCode(dstRegCode);
+
+                    var srcRegCode = ((op1 >> 3) & 0x07); // 00XXX000
+                    var srcReg = scope.registerFromCode(srcRegCode);
+
+                    if (mod === 0x03) { // 11 = xor dstReg, srcReg
+                        console.log(sprintf('xor %s, %s', dstReg, srcReg));
+                    }
+                    else if (mod === 0x02) { // 10 = xor [dstReg+disp32], srcReg
+                        var disp32 = scope.reader.readUint32();
+                        console.log(sprintf('xor [%s%+02Xh], %s', dstReg, disp32, srcReg));
+                    }
+                    else if (mod === 0x01) { // 01 = xor [dstReg+disp8], srcReg
+                        var disp8 = scope.reader.readUint8();
+                        console.log(sprintf('xor [%s%+02Xh], %s', dstReg, disp8, srcReg));
+                    }
+                    else if (mod === 0x00) { // 00 = xor dstReg, [srcReg]
+                        console.log(sprintf('xor [%s], %s', dstReg, srcReg));
+                    }
+
+                    break;
+                }
+
                 case 0x33: // xor
                 {
                     var op1 = scope.reader.readUint8();
@@ -146,6 +176,22 @@ function Processor80386(reader) {
                     var reg = scope.registerFromCode(po & 0x07); // 00000XXX
 
                     console.log(sprintf('pop %s', reg));
+
+                    break;
+                }
+
+                case 0x64:
+                {
+                    var op1 = scope.reader.readUint8();
+
+                    // TODO
+                    if(op1 === 0xa1) {
+                        var imm32 = scope.reader.readUint32();
+                        console.log(sprintf('mov eax, fs:%+02Xh', imm32));
+                    }
+                    else {
+                        throw new Error('UNIMPLEMENTED');
+                    }
 
                     break;
                 }
@@ -353,6 +399,15 @@ function Processor80386(reader) {
                     break;
                 }
 
+                case 0xa1: // mov eax, imm32
+                {
+                    var imm32 = scope.reader.readUint32();
+
+                    console.log(sprintf('mov eax, %+02Xh', imm32));
+
+                    break;
+                }
+
                 case 0xb8: // mov reg, imm32
                 case 0xb9:
                 case 0xba:
@@ -409,7 +464,7 @@ function Processor80386(reader) {
 
             }
 
-
+            return true;
         };
 
         scope.ctor();

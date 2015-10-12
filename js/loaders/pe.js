@@ -35,27 +35,35 @@ function LoaderPe(reader) {
             scope.ntHeaders.read(scope.reader);
 
             // Read sections
-            for(var i = 0; i < this.ntHeaders.FileHeader.NumberOfSections; i++) {
+            for(var i = 0; i < scope.ntHeaders.FileHeader.NumberOfSections; i++) {
                 var sectionHeader = new LoaderPe.SectionHeader();
 
-                scope.reader.seek(this.ntHeaders.OptionalHeader.readerOffset +
-                    this.ntHeaders.FileHeader.SizeOfOptionalHeader + (sectionHeader.size() * i));
+                scope.reader.seek(scope.ntHeaders.OptionalHeader.readerOffset +
+                    scope.ntHeaders.FileHeader.SizeOfOptionalHeader + (sectionHeader.size() * i));
 
                 sectionHeader.read(scope.reader);
 
                 scope.sectionHeaders.push(sectionHeader);
             }
-
-            console.log(this);
         };
 
-        scope.disassemble = function() {
-            var cpu = new Processor80386(scope.reader);
-            scope.reader.seek(0x1060);
+        scope.getExports = function() {
+            var exports = [ ];
 
-            while(true) {
-                cpu.disassemble();
+            var entryPointAddress = scope.ntHeaders.OptionalHeader.AddressOfEntryPoint;
+
+            for(var i in scope.sectionHeaders) {
+                var sectionHeader = scope.sectionHeaders[i];
+
+                if(sectionHeader.VirtualAddress <= entryPointAddress &&
+                    (sectionHeader.VirtualAddress + sectionHeader.VirtualSize) > entryPointAddress) {
+
+                    var fileOffset = sectionHeader.PointerToRawData + (entryPointAddress - sectionHeader.VirtualAddress);
+                    exports.push(fileOffset);
+                }
             }
+
+            return exports;
         };
 
         scope.ctor();

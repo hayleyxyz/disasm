@@ -12,6 +12,16 @@ function UI() {
             scope.fileInput.onchange = scope.events.onFileChanged;
         };
 
+        scope.addLine = function(line) {
+            var target = document.getElementById('disam');
+
+            var lineElement = document.createElement('div');
+
+            lineElement.textContent = line;
+
+            target.appendChild(lineElement);
+        };
+
         scope.events = {
             onFileChanged: function() {
                 if(this.files.length === 0) {
@@ -20,7 +30,7 @@ function UI() {
 
                 var file = this.files[0];
 
-                var disam = new Disassembler();
+                var disam = new Disassembler(scope);
                 disam.loadFile(file);
             }
         };
@@ -30,11 +40,13 @@ function UI() {
     })(this);
 }
 
-function Disassembler() {
+function Disassembler(ui) {
     (function(scope) {
 
-        scope.ctor = function() {
+        scope.ui = ui;
 
+        scope.ctor = function() {
+            //
         };
 
         scope.loadFile = function(file) {
@@ -50,10 +62,24 @@ function Disassembler() {
                 var arrayBuffer = event.target.result;
                 var binaryReader = new ArrayBufferBinaryReader(arrayBuffer);
 
+                for(var i = 0; i < binaryReader.length(); i++) {
+                    var db = binaryReader.readUint8();
+
+                    ui.addLine(sprintf('db %+02Xh', db));
+                }
+
                 var pe = new LoaderPe(binaryReader);
                 pe.parse();
 
-                console.log(pe);
+                var exports = pe.getExports();
+                for(var i in exports) {
+                    binaryReader.seek(exports[i]);
+
+                    var cpu = new Processor80386(binaryReader);
+                    while(cpu.disassemble()) {
+                        //
+                    }
+                }
             }
         };
 
